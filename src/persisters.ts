@@ -1,5 +1,11 @@
 import {DEBUG, ifNotUndefined, isUndefined} from './common/other';
-import {GetTransactionChanges, Store, Tables, Values} from './types/store.d';
+import {
+  GetTransactionChanges,
+  Store,
+  Tables,
+  TransactionChanges,
+  Values,
+} from './types/store.d';
 import {
   Persister,
   PersisterListener,
@@ -17,7 +23,11 @@ const scheduleActions: Map<any, Action[]> = mapNew();
 
 export const createCustomPersister = <ListeningHandle>(
   store: Store,
-  getPersisted: () => Promise<[Tables, Values] | undefined>,
+  getPersisted: <T extends boolean | undefined = undefined>(
+    transactions?: T,
+  ) => T extends true
+    ? Promise<TransactionChanges | undefined>
+    : Promise<[Tables, Values] | undefined>,
   setPersisted: (
     getContent: () => [Tables, Values],
     getTransactionChanges?: GetTransactionChanges,
@@ -81,21 +91,34 @@ export const createCustomPersister = <ListeningHandle>(
     load: async (
       initialTables?: Tables,
       initialValues?: Values,
+      transactionChanges?: boolean,
     ): Promise<Persister> =>
       await loadLock(async () => {
         try {
-          store.setContent((await getPersisted()) as [Tables, Values]);
-        } catch {
-          store.setContent([initialTables, initialValues] as [Tables, Values]);
+          const data = await getPersisted(transactionChanges);
+          if (transactionChanges) {
+            if (data) store.setTransactionChanges(data);
+          } else {
+            store.setContent(data as [Tables, Values]);
+          }
+        } catch (error) {
+          onIgnoredError?.(error);
+          if (!transactionChanges) {
+            store.setContent([initialTables, initialValues] as [
+              Tables,
+              Values,
+            ]);
+          }
         }
       }),
 
     startAutoLoad: async (
       initialTables: Tables = {},
       initialValues: Values = {},
+      transactionChanges?: boolean,
     ): Promise<Persister> => {
       persister.stopAutoLoad();
-      await persister.load(initialTables, initialValues);
+      await persister.load(initialTables, initialValues, transactionChanges);
       listening = 1;
       listeningHandle = addPersisterListener(
         async (getContent, getTransactionChanges) => {

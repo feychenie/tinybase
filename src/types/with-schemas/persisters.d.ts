@@ -100,12 +100,14 @@ export interface Persister<in out Schemas extends OptionalSchemas> {
   load(
     initialTables?: Tables<Schemas[0], true>,
     initialValues?: Values<Schemas[1], true>,
+    transactionChanges?: boolean,
   ): Promise<Persister<Schemas>>;
 
   /// Persister.startAutoLoad
   startAutoLoad(
     initialTables?: Tables<Schemas[0], true>,
     initialValues?: Values<Schemas[1], true>,
+    transactionChanges?: boolean,
   ): Promise<Persister<Schemas>>;
 
   /// Persister.stopAutoLoad
