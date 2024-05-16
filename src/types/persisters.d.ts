@@ -89,12 +89,17 @@ export type DpcTabularValues = {
 export interface Persister {
   //
   /// Persister.load
-  load(initialTables?: Tables, initialValues?: Values): Promise<Persister>;
+  load(
+    initialTables?: Tables,
+    initialValues?: Values,
+    transactionChanges?: boolean,
+  ): Promise<Persister>;
 
   /// Persister.startAutoLoad
   startAutoLoad(
     initialTables?: Tables,
     initialValues?: Values,
+    transactionChanges?: boolean,
   ): Promise<Persister>;
 
   /// Persister.stopAutoLoad

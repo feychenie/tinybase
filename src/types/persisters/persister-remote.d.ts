@@ -16,4 +16,5 @@ export function createRemotePersister(
   saveUrl: string,
   autoLoadIntervalSeconds?: number,
   onIgnoredError?: (error: any) => void,
+  customFetch?: typeof fetch,
 ): RemotePersister;

@@ -16,27 +16,29 @@ export const createRemotePersister = ((
   saveUrl: string,
   autoLoadIntervalSeconds = 5,
   onIgnoredError?: (error: any) => void,
+  customFetch: typeof fetch = fetch,
 ): RemotePersister => {
   let lastEtag: string | null;
 
   const getPersisted = async (): Promise<[Tables, Values]> => {
-    const response = await fetch(loadUrl);
+    const response = await customFetch(loadUrl);
     lastEtag = getETag(response);
     return jsonParse(await response.text());
   };
 
   const setPersisted = async (
     getContent: () => [Tables, Values],
-  ): Promise<any> =>
-    await fetch(saveUrl, {
+  ): Promise<any> => {
+    return await customFetch(saveUrl, {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: jsonString(getContent()),
     });
+  };
 
   const addPersisterListener = (listener: PersisterListener): NodeJS.Timeout =>
     startInterval(async () => {
-      const response = await fetch(loadUrl, {method: 'HEAD'});
+      const response = await customFetch(loadUrl, {method: 'HEAD'});
       const currentEtag = getETag(response);
       if (
         !isUndefined(lastEtag) &&

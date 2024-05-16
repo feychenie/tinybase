@@ -17,4 +17,5 @@ export function createRemotePersister<Schemas extends OptionalSchemas>(
   saveUrl: string,
   autoLoadIntervalSeconds?: number,
   onIgnoredError?: (error: any) => void,
+  customFetch?: typeof fetch,
 ): RemotePersister<Schemas>;
